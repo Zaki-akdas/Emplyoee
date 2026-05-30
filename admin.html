@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Payroll Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Extra styles just for the Admin Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--input-bg); color: var(--text-muted); font-weight: 600; }
+        .loading { text-align: center; color: var(--primary); font-weight: bold; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 600px;">
+        <h1>Payroll Dashboard</h1>
+        
+        <div class="card">
+            <h2>Global Settings</h2>
+            <div class="input-group">
+                <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; display: block;">Standard Daily Wage (₹)</label>
+                <input type="number" id="base-wage" value="500" required>
+            </div>
+            <button id="btn-generate" class="btn primary">Fetch & Calculate Payroll</button>
+        </div>
+
+        <div class="card" id="report-card" style="display: none;">
+            <h2>Salary Report</h2>
+            <div id="status-text"></div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Days Worked</th>
+                        <th>Total Salary</th>
+                    </tr>
+                </thead>
+                <tbody id="payroll-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // PASTE YOUR BRAND NEW GOOGLE SCRIPT URL HERE:
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrlfQ8Og2uLpaLCjIIMi90t9wysLEPoXrBN4iKSgBvYWGPZu6iCKDMxL_dzst0I8odYg/exec";
+
+        document.getElementById('btn-generate').addEventListener('click', async () => {
+            // ... (keep the rest of your fetching and calculation code exactly the same)
+            const wage = parseFloat(document.getElementById('base-wage').value);
+            const reportCard = document.getElementById('report-card');
+            const tbody = document.getElementById('payroll-body');
+            const statusText = document.getElementById('status-text');
+
+            if (isNaN(wage) || wage <= 0) {
+                alert("Please enter a valid daily wage.");
+                return;
+            }
+
+            // Show loading state
+            reportCard.style.display = 'block';
+            statusText.innerHTML = '<div class="loading">Fetching live data from Google Sheets...</div>';
+            tbody.innerHTML = ''; // Clear old data
+
+            try {
+                // Read data from Google Sheets
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                const json = await response.json();
+
+                if (json.result === 'success') {
+                    const records = json.data;
+                    const attendanceData = {};
+
+                    // Step 1: Process the raw data
+                    records.forEach(row => {
+                        // We only care about successful "Log In" actions to count a workday
+                        if (row.Action === "Log In" && row.Name) {
+                            // Extract just the date (e.g., "5/30/2026" from the timestamp)
+                            const dateString = new Date(row.Timestamp).toLocaleDateString();
+                            
+                            // Create a bucket for the employee if it doesn't exist
+                            if (!attendanceData[row.Name]) {
+                                attendanceData[row.Name] = new Set(); // A Set only stores unique values
+                            }
+                            
+                            // Add the date to their bucket. If they logged in twice on the same day, 
+                            // the Set ignores the duplicate automatically!
+                            attendanceData[row.Name].add(dateString);
+                        }
+                    });
+
+                    // Step 2: Calculate and display the results
+                    statusText.innerHTML = ''; // Clear loading text
+                    
+                    // Loop through our processed employee data
+                    for (const [employeeName, datesSet] of Object.entries(attendanceData)) {
+                        const daysWorked = datesSet.size; // Count unique days
+                        const totalSalary = daysWorked * wage;
+
+                        // Create a new row in the table
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td style="font-weight: 600; color: var(--text-main);">${employeeName}</td>
+                            <td>${daysWorked} days</td>
+                            <td style="color: var(--success); font-weight: bold;">₹${totalSalary.toLocaleString()}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+
+                    if (Object.keys(attendanceData).length === 0) {
+                        statusText.innerHTML = '<p style="color: var(--text-muted);">No attendance records found yet.</p>';
+                    }
+
+                } else {
+                    statusText.innerHTML = '<p style="color: var(--danger);">Error reading data from database.</p>';
+                }
+            } catch (error) {
+                statusText.innerHTML = '<p style="color: var(--danger);">Network error. Please try again.</p>';
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

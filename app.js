@@ -1,6 +1,6 @@
 // --- CONFIGURATION ---
-// Your NEW live Google Script URL
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztKfC1ERoUXEnAXUdqb5_AnihlUgU5clRY9uzdzrjjRXuqiqj6jm8yfvsGl62sLTLkBA/exec"; 
+// Your NEWEST live Google Script URL
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrlfQ8Og2uLpaLCjIIMi90t9wysLEPoXrBN4iKSgBvYWGPZu6iCKDMxL_dzst0I8odYg/exec"; 
 
 const OFFICE_LAT = 23.2599; // Bhopal Latitude
 const OFFICE_LNG = 77.4126; // Bhopal Longitude
@@ -16,7 +16,6 @@ const empNameInput = document.getElementById('employee-name');
 let currentLocationStatus = "Checking...";
 
 // --- GEOLOCATION LOGIC ---
-// Calculates the distance between two coordinates in kilometers
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
     const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -34,24 +33,24 @@ if ("geolocation" in navigator) {
             if (distance <= ALLOWED_RADIUS_KM) {
                 currentLocationStatus = "Verified";
                 statusMsg.textContent = "Location verified. You are within the office premises.";
-                statusMsg.style.color = "#27ae60";
+                statusMsg.style.color = "#10B981"; // Success color
                 btnLogin.disabled = false;
                 btnLogout.disabled = false;
             } else {
                 currentLocationStatus = `Failed (${distance.toFixed(1)}km away)`;
                 statusMsg.textContent = `You are ${distance.toFixed(1)}km away. You must be at the office.`;
-                statusMsg.style.color = "#e74c3c";
+                statusMsg.style.color = "#EF4444"; // Danger color
             }
         },
         (error) => {
             currentLocationStatus = "Location Access Denied";
             statusMsg.textContent = "Please allow location access to log attendance.";
-            statusMsg.style.color = "#e74c3c";
+            statusMsg.style.color = "#EF4444";
         }
     );
 } else {
     statusMsg.textContent = "Geolocation is not supported by your browser.";
-    statusMsg.style.color = "#e74c3c";
+    statusMsg.style.color = "#EF4444";
 }
 
 // --- SEND ATTENDANCE DATA ---
@@ -61,7 +60,7 @@ async function sendToDatabase(name, action) {
     if(action === 'Log Out') btnLogout.innerText = "Sending...";
     
     const data = {
-        type: "Attendance", // Tells backend this is an attendance punch
+        type: "Attendance", 
         name: name,
         action: action,
         locationStatus: currentLocationStatus
@@ -95,7 +94,7 @@ async function sendLeaveRequest(name, date, reason) {
     btnLeave.innerText = "Submitting...";
     
     const data = {
-        type: "Leave", // Tells backend this is a leave request
+        type: "Leave",
         name: name,
         date: date,
         reason: reason
@@ -145,6 +144,5 @@ btnLeave.addEventListener('click', () => {
         alert("Please ensure your Name (at the top), Leave Date, and Reason are all filled out.");
         return;
     }
-    
     sendLeaveRequest(name, date, reason);
 });
