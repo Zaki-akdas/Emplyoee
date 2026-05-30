@@ -1,6 +1,6 @@
 // --- CONFIGURATION ---
-// Your live Google Script URL
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAsikucAP5S5jHioriA0KN_lDjB4GfXz6MeEt86sMbs7UGlwSxOb9k9iQFh1sOCRwgHg/exec"; 
+// Your NEW live Google Script URL
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbztKfC1ERoUXEnAXUdqb5_AnihlUgU5clRY9uzdzrjjRXuqiqj6jm8yfvsGl62sLTLkBA/exec"; 
 
 const OFFICE_LAT = 23.2599; // Bhopal Latitude
 const OFFICE_LNG = 77.4126; // Bhopal Longitude
@@ -10,6 +10,7 @@ const ALLOWED_RADIUS_KM = 5;
 const statusMsg = document.getElementById('status-msg');
 const btnLogin = document.getElementById('btn-login');
 const btnLogout = document.getElementById('btn-logout');
+const btnLeave = document.getElementById('btn-leave');
 const empNameInput = document.getElementById('employee-name');
 
 let currentLocationStatus = "Checking...";
@@ -30,7 +31,6 @@ if ("geolocation" in navigator) {
     navigator.geolocation.getCurrentPosition(
         (position) => {
             const distance = getDistanceFromLatLonInKm(OFFICE_LAT, OFFICE_LNG, position.coords.latitude, position.coords.longitude);
-            
             if (distance <= ALLOWED_RADIUS_KM) {
                 currentLocationStatus = "Verified";
                 statusMsg.textContent = "Location verified. You are within the office premises.";
@@ -54,42 +54,72 @@ if ("geolocation" in navigator) {
     statusMsg.style.color = "#e74c3c";
 }
 
-// --- SEND DATA TO GOOGLE SHEETS ---
+// --- SEND ATTENDANCE DATA ---
 async function sendToDatabase(name, action) {
-    // Change button text to show it is loading
     const originalBtnText = action === 'Log In' ? btnLogin.innerText : btnLogout.innerText;
     if(action === 'Log In') btnLogin.innerText = "Sending...";
     if(action === 'Log Out') btnLogout.innerText = "Sending...";
     
     const data = {
+        type: "Attendance", // Tells backend this is an attendance punch
         name: name,
         action: action,
         locationStatus: currentLocationStatus
     };
 
     try {
-        // Send the POST request to your Google Script URL
         const response = await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify(data),
-            // 'no-cors' can be used if you still get strict CORS errors, but standard POST is better for receiving the success response
+            body: JSON.stringify(data)
         });
-
         const result = await response.json();
         
         if(result.result === "success") {
-            alert(`Success! ${name} ${action} recorded to the Admin Dashboard.`);
-            empNameInput.value = ''; // Clear the input
+            alert(`Success! ${name} ${action} recorded.`);
+            empNameInput.value = ''; 
         } else {
             alert("Error saving data. Please try again.");
         }
     } catch (error) {
         console.error("Error:", error);
-        alert("Network error. Please check your connection or CORS settings.");
+        alert("Network error. Please check your connection.");
     } finally {
-        // Reset button text
         if(action === 'Log In') btnLogin.innerText = originalBtnText;
         if(action === 'Log Out') btnLogout.innerText = originalBtnText;
+    }
+}
+
+// --- SEND LEAVE DATA ---
+async function sendLeaveRequest(name, date, reason) {
+    const originalBtnText = btnLeave.innerText;
+    btnLeave.innerText = "Submitting...";
+    
+    const data = {
+        type: "Leave", // Tells backend this is a leave request
+        name: name,
+        date: date,
+        reason: reason
+    };
+
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        
+        if(result.result === "success") {
+            alert(`Leave request for ${name} submitted successfully.`);
+            document.getElementById('leave-date').value = '';
+            document.getElementById('leave-reason').value = '';
+        } else {
+            alert("Error saving leave request.");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Network error. Please check your connection.");
+    } finally {
+        btnLeave.innerText = originalBtnText;
     }
 }
 
@@ -104,4 +134,17 @@ btnLogout.addEventListener('click', () => {
     const name = empNameInput.value.trim();
     if (name) sendToDatabase(name, 'Log Out');
     else alert("Please enter your name.");
+});
+
+btnLeave.addEventListener('click', () => {
+    const name = empNameInput.value.trim();
+    const date = document.getElementById('leave-date').value;
+    const reason = document.getElementById('leave-reason').value.trim();
+
+    if (!name || !date || !reason) {
+        alert("Please ensure your Name (at the top), Leave Date, and Reason are all filled out.");
+        return;
+    }
+    
+    sendLeaveRequest(name, date, reason);
 });
