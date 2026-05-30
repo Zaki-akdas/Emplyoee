@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Portal</h1>
+        
+        <div class="card">
+            <h2>Location-Based Attendance</h2>
+            <p id="status-msg">Fetching location...</p>
+            <div class="input-group">
+                <input type="text" id="employee-name" placeholder="Enter Employee Name" required>
+            </div>
+            <div class="button-group">
+                <button id="btn-login" class="btn success" disabled>Log In</button>
+                <button id="btn-logout" class="btn danger" disabled>Log Out</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Leave Application</h2>
+            <div class="input-group">
+                <input type="date" id="leave-date" required>
+            </div>
+            <div class="input-group">
+                <textarea id="leave-reason" placeholder="Reason for leave" rows="3" required></textarea>
+            </div>
+            <button id="btn-leave" class="btn primary">Submit Leave Request</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
