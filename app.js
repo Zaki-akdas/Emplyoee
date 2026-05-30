@@ -1,6 +1,5 @@
 // --- CONFIGURATION ---
-// Your NEWEST live Google Script URL
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzrlfQ8Og2uLpaLCjIIMi90t9wysLEPoXrBN4iKSgBvYWGPZu6iCKDMxL_dzst0I8odYg/exec"; 
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbze49DgkDzFq7RF7XQpHzPMchMt_BAcxTQdiz_cW-sIM95nVElTdnSc36o-lqDr-S1E8w/exec"; 
 
 const OFFICE_LAT = 23.2599; // Bhopal Latitude
 const OFFICE_LNG = 77.4126; // Bhopal Longitude
@@ -33,13 +32,13 @@ if ("geolocation" in navigator) {
             if (distance <= ALLOWED_RADIUS_KM) {
                 currentLocationStatus = "Verified";
                 statusMsg.textContent = "Location verified. You are within the office premises.";
-                statusMsg.style.color = "#10B981"; // Success color
+                statusMsg.style.color = "#10B981"; 
                 btnLogin.disabled = false;
                 btnLogout.disabled = false;
             } else {
                 currentLocationStatus = `Failed (${distance.toFixed(1)}km away)`;
                 statusMsg.textContent = `You are ${distance.toFixed(1)}km away. You must be at the office.`;
-                statusMsg.style.color = "#EF4444"; // Danger color
+                statusMsg.style.color = "#EF4444"; 
             }
         },
         (error) => {
@@ -141,7 +140,7 @@ btnLeave.addEventListener('click', () => {
     const reason = document.getElementById('leave-reason').value.trim();
 
     if (!name || !date || !reason) {
-        alert("Please ensure your Name (at the top), Leave Date, and Reason are all filled out.");
+        alert("Please ensure your Name, Leave Date, and Reason are all filled out.");
         return;
     }
     sendLeaveRequest(name, date, reason);
